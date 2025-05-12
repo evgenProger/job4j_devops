@@ -1,6 +1,13 @@
 pipeline {
     agent { label 'agent1' }
 
+    environment {
+            GRADLE_REMOTE_CACHE_URL = 'http://192.168.0.109:5071/cache/'
+            GRADLE_REMOTE_CACHE_USERNAME = 'user102'
+            GRADLE_REMOTE_CACHE_PASSWORD = 'Cache#2025'
+            GRADLE_REMOTE_CACHE_PUSH = 'true'
+        }
+
     tools {
         git 'Default'
     }
@@ -13,6 +20,16 @@ pipeline {
                 }
             }
         }
+
+        stage('Debug Env') {
+                    steps {
+                        sh 'echo URL=$GRADLE_REMOTE_CACHE_URL'
+                        sh 'echo USER=$GRADLE_REMOTE_CACHE_USERNAME'
+                        sh 'echo PASS=$GRADLE_REMOTE_CACHE_PASSWORD'
+                        sh 'echo PUSH=$GRADLE_REMOTE_CACHE_PUSH'
+                    }
+                }
+
         stage('Checkstyle Main') {
             steps {
                 script {

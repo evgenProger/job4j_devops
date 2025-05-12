@@ -61,6 +61,26 @@ tasks.register<Zip>("zipJavaDoc") {
     destinationDirectory.set(layout.buildDirectory.dir("archives")) // Директория, куда будет сохранен архив
 }
 
+tasks.register<Zip>("archiveResources") {
+    group = "custom optimization"
+    description = "Archives the resources folder into a ZIP file"
+
+    val inputDir = file("src/main/resources")
+    val outputDir = layout.buildDirectory.dir("archives")
+
+    inputs.dir(inputDir) // Входные данные для инкрементальной сборки
+    outputs.file(outputDir.map { it.file("resources.zip") }) // Выходной файл
+
+    from(inputDir)
+    destinationDirectory.set(outputDir)
+    archiveFileName.set("resources.zip")
+
+    doLast {
+        println("Resources archived successfully at ${outputDir.get().asFile.absolutePath}")
+    }
+}
+
+
 tasks.register("checkJarSize") {
     group = "verification"
     description = "Checks the size of the generated JAR file."
