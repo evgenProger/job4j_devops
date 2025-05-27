@@ -1,12 +1,5 @@
 pipeline {
-    agent { label 'agent1' }
-
-    environment {
-            GRADLE_REMOTE_CACHE_URL = 'http://192.168.0.109:5071/cache/'
-            GRADLE_REMOTE_CACHE_USERNAME = 'user102'
-            GRADLE_REMOTE_CACHE_PASSWORD = 'Cache#2025'
-            GRADLE_REMOTE_CACHE_PUSH = 'true'
-        }
+    agent { label 'agent-jdk21' }
 
     tools {
         git 'Default'
@@ -15,71 +8,45 @@ pipeline {
     stages {
         stage('Prepare Environment') {
             steps {
-                script {
-                    sh 'chmod +x ./gradlew'
-                }
+                sh 'chmod +x ./gradlew'
             }
         }
-
-        stage('Debug Env') {
-                    steps {
-                        sh 'echo URL=$GRADLE_REMOTE_CACHE_URL'
-                        sh 'echo USER=$GRADLE_REMOTE_CACHE_USERNAME'
-                        sh 'echo PASS=$GRADLE_REMOTE_CACHE_PASSWORD'
-                        sh 'echo PUSH=$GRADLE_REMOTE_CACHE_PUSH'
-                    }
-                }
-
-        stage('Checkstyle Main') {
+        stage('Check') {
             steps {
-                script {
-                    sh './gradlew checkstyleMain'
-                }
+                sh './gradlew check'
             }
         }
-        stage('Checkstyle Test') {
+        stage('Package') {
             steps {
-                script {
-                    sh './gradlew checkstyleTest'
-                }
-            }
-        }
-        stage('Compile') {
-            steps {
-                script {
-                    sh './gradlew compileJava'
-                }
-            }
-        }
-        stage('Test') {
-            steps {
-                script {
-                    sh './gradlew test'
-                }
+                sh './gradlew build'
             }
         }
         stage('JaCoCo Report') {
             steps {
-                script {
-                    sh './gradlew jacocoTestReport'
-                }
+                sh './gradlew jacocoTestReport'
             }
         }
         stage('JaCoCo Verification') {
             steps {
-                script {
-                    sh './gradlew jacocoTestCoverageVerification'
-                }
+                sh './gradlew jacocoTestCoverageVerification'
+            }
+        }
+        stage('Docker Build') {
+            steps {
+                sh 'docker build -t job4j_devops .'
             }
         }
     }
+
     post {
         always {
             script {
-                def buildInfo = "Build number: ${currentBuild.number}\n" +
-                                "Build status: ${currentBuild.currentResult}\n" +
-                                "Started at: ${new Date(currentBuild.startTimeInMillis)}\n" +
-                                "Duration so far: ${currentBuild.durationString}"
+                def buildInfo = """
+                    Build number: ${currentBuild.number}
+                    Build status: ${currentBuild.currentResult}
+                    Started at: ${new Date(currentBuild.startTimeInMillis)}
+                    Duration: ${currentBuild.durationString}
+                """
                 telegramSend(message: buildInfo)
             }
         }
