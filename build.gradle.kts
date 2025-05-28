@@ -40,8 +40,12 @@ dependencies {
 	compileOnly("org.projectlombok:lombok:1.18.36")
 	annotationProcessor("org.projectlombok:lombok:1.18.36")
 	implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.liquibase:liquibase-core:4.30.0")
+    implementation("org.postgresql:postgresql:42.7.4")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
-	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("com.h2database:h2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
 	testImplementation("org.assertj:assertj-core:3.24.2")
 }
@@ -112,3 +116,30 @@ tasks.spotbugsMain {
 tasks.test {
     finalizedBy(tasks.spotbugsMain)
 }
+
+sourceSets {
+    create("integrationTest") {
+        compileClasspath += sourceSets["main"].output + sourceSets["test"].output
+        runtimeClasspath += sourceSets["main"].output + sourceSets["test"].output
+        java.srcDir("src/integrationTest/java")
+        resources.srcDir("src/integrationTest/resources")
+    }
+}
+
+configurations {
+    maybeCreate("integrationTestImplementation").apply {
+        extendsFrom(configurations["testImplementation"])
+    }
+    maybeCreate("integrationTestRuntimeOnly").apply {
+        extendsFrom(configurations["testRuntimeOnly"])
+    }
+}
+
+tasks.register<Test>("it") {
+    description = "Runs integration tests"
+    group = "verification"
+    testClassesDirs = sourceSets["integrationTest"].output.classesDirs
+    classpath = sourceSets["integrationTest"].runtimeClasspath
+    shouldRunAfter("test")
+}
+
